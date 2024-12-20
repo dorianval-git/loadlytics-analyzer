@@ -1,13 +1,23 @@
+export interface GA4Event {
+  time: number;
+  measurementId: string;
+  url: string;
+  parameters: Record<string, string>;
+}
+
+export interface GA4Events {
+  pageView?: GA4Event;
+  viewItem?: GA4Event;
+}
+
 export interface PageMetrics {
   ttfb: number;
   fcp: number;
   domLoad: number;
   windowLoad: number;
   resources: number;
-  ga4Events: {
-    pageView?: number;
-    viewItem?: number;
-  };
+  ga4Events: GA4Events;
+  allGA4Events: GA4Event[];
 }
 
 export interface StoreMetrics {
@@ -33,8 +43,7 @@ export const formatTime = (seconds: number): string => {
 };
 
 export const mockFetchMetrics = async (url: string): Promise<StoreMetrics> => {
-  // This is a mock implementation. In a real app, you'd use Selenium or similar
-  await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   return {
     homepage: {
@@ -44,8 +53,31 @@ export const mockFetchMetrics = async (url: string): Promise<StoreMetrics> => {
       windowLoad: 2.456,
       resources: 45,
       ga4Events: {
-        pageView: 0.567,
+        pageView: {
+          time: 0.567,
+          measurementId: "G-D62M79ZZEG",
+          url: "https://alohas.com/",
+          parameters: {
+            event_name: "page_view",
+            page_title: "ALOHAS | On-demand Fashion",
+            page_location: "https://alohas.com/",
+            visitor_type: "guest"
+          }
+        }
       },
+      allGA4Events: [
+        {
+          time: 0.567,
+          measurementId: "G-D62M79ZZEG",
+          url: "https://alohas.com/",
+          parameters: {
+            event_name: "page_view",
+            page_title: "ALOHAS | On-demand Fashion",
+            page_location: "https://alohas.com/",
+            visitor_type: "guest"
+          }
+        }
+      ]
     },
     productPage: {
       ttfb: 0.298,
@@ -54,9 +86,55 @@ export const mockFetchMetrics = async (url: string): Promise<StoreMetrics> => {
       windowLoad: 2.234,
       resources: 38,
       ga4Events: {
-        pageView: 0.456,
-        viewItem: 0.789,
+        pageView: {
+          time: 0.456,
+          measurementId: "G-D62M79ZZEG",
+          url: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
+          parameters: {
+            event_name: "page_view",
+            page_title: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers | ALOHAS",
+            page_location: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
+            visitor_type: "guest"
+          }
+        },
+        viewItem: {
+          time: 0.789,
+          measurementId: "G-D62M79ZZEG",
+          url: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
+          parameters: {
+            event_name: "view_item",
+            item_name: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers",
+            item_brand: "ALOHAS",
+            item_category: "Sneakers",
+            price: "863.00"
+          }
+        }
       },
-    },
+      allGA4Events: [
+        {
+          time: 0.456,
+          measurementId: "G-D62M79ZZEG",
+          url: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
+          parameters: {
+            event_name: "page_view",
+            page_title: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers | ALOHAS",
+            page_location: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
+            visitor_type: "guest"
+          }
+        },
+        {
+          time: 0.789,
+          measurementId: "G-D62M79ZZEG",
+          url: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
+          parameters: {
+            event_name: "view_item",
+            item_name: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers",
+            item_brand: "ALOHAS",
+            item_category: "Sneakers",
+            price: "863.00"
+          }
+        }
+      ]
+    }
   };
 };

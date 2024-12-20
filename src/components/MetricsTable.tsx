@@ -1,5 +1,7 @@
 import { PageMetrics } from "@/lib/metrics";
 import { formatTime } from "@/lib/metrics";
+import { GA4EventDetails } from "./GA4EventDetails";
+import { GA4EventsList } from "./GA4EventsList";
 
 interface MetricsTableProps {
   title: string;
@@ -48,24 +50,20 @@ export const MetricsTable = ({ title, metrics }: MetricsTableProps) => {
               {metrics.resources}
             </td>
           </tr>
-          <tr>
-            <td className="py-2 text-sm text-gray-600">GA4 page_view</td>
-            <td className="py-2 text-sm font-mono text-right">
-              {metrics.ga4Events.pageView
-                ? formatTime(metrics.ga4Events.pageView)
-                : "N/A"}
-            </td>
-          </tr>
-          {metrics.ga4Events.viewItem && (
-            <tr>
-              <td className="py-2 text-sm text-gray-600">GA4 view_item</td>
-              <td className="py-2 text-sm font-mono text-right">
-                {formatTime(metrics.ga4Events.viewItem)}
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
+
+      <div className="space-y-4 pt-4">
+        <div className="text-sm font-semibold text-gray-600">GA4 Events</div>
+        {metrics.ga4Events.pageView && (
+          <GA4EventDetails event={metrics.ga4Events.pageView} eventName="page_view" />
+        )}
+        {metrics.ga4Events.viewItem && (
+          <GA4EventDetails event={metrics.ga4Events.viewItem} eventName="view_item" />
+        )}
+      </div>
+
+      <GA4EventsList events={metrics.allGA4Events} />
     </div>
   );
 };
