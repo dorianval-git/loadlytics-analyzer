@@ -2,7 +2,7 @@ import { useState } from "react";
 import { UrlInput } from "@/components/UrlInput";
 import { MetricsTable } from "@/components/MetricsTable";
 import { StoreMetrics, mockFetchMetrics } from "@/lib/metrics";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [metrics, setMetrics] = useState<StoreMetrics | null>(null);
@@ -15,6 +15,12 @@ const Index = () => {
     try {
       const results = await mockFetchMetrics(url);
       setMetrics(results);
+      toast({
+        title: "Using Mock Data",
+        description: "This is currently using mock data for demonstration purposes. In a production environment, this would fetch real GA4 data.",
+        variant: "default",
+        duration: 5000,
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -36,6 +42,9 @@ const Index = () => {
           <p className="text-sm text-gray-500">
             Enter a Shopify store URL to analyze its performance metrics
           </p>
+          <div className="text-xs bg-yellow-50 border border-yellow-200 rounded-md p-2 text-yellow-700">
+            Note: Currently using mock data for demonstration. Real implementation would fetch actual GA4 data.
+          </div>
         </div>
 
         <UrlInput onAnalyze={handleAnalyze} isLoading={isLoading} />
