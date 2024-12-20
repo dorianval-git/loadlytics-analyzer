@@ -11,6 +11,7 @@ const Index = () => {
 
   const handleAnalyze = async (url: string) => {
     setIsLoading(true);
+    setMetrics(null); // Clear previous data
     try {
       const results = await mockFetchMetrics(url);
       setMetrics(results);

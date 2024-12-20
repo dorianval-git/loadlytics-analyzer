@@ -61,7 +61,13 @@ export const mockFetchMetrics = async (url: string): Promise<StoreMetrics> => {
             event_name: "page_view",
             page_title: "ALOHAS | On-demand Fashion",
             page_location: "https://alohas.com/",
-            visitor_type: "guest"
+            visitor_type: "guest",
+            language: "en-gb",
+            screen_resolution: "1512x982",
+            client_id: "70765470.1734709897",
+            engagement_time_msec: "4569",
+            session_id: "1734709896",
+            session_number: "1"
           }
         }
       },
@@ -73,6 +79,23 @@ export const mockFetchMetrics = async (url: string): Promise<StoreMetrics> => {
           parameters: {
             event_name: "page_view",
             page_title: "ALOHAS | On-demand Fashion",
+            page_location: "https://alohas.com/",
+            visitor_type: "guest",
+            language: "en-gb",
+            screen_resolution: "1512x982",
+            client_id: "70765470.1734709897",
+            engagement_time_msec: "4569",
+            session_id: "1734709896",
+            session_number: "1"
+          }
+        },
+        {
+          time: 1.234,
+          measurementId: "G-D62M79ZZEG",
+          url: "https://alohas.com/",
+          parameters: {
+            event_name: "user_engagement",
+            engagement_time_msec: "1234",
             page_location: "https://alohas.com/",
             visitor_type: "guest"
           }
@@ -94,7 +117,13 @@ export const mockFetchMetrics = async (url: string): Promise<StoreMetrics> => {
             event_name: "page_view",
             page_title: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers | ALOHAS",
             page_location: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
-            visitor_type: "guest"
+            visitor_type: "guest",
+            language: "en-gb",
+            screen_resolution: "1512x982",
+            client_id: "70765470.1734709897",
+            engagement_time_msec: "4797",
+            session_id: "1734709896",
+            session_number: "1"
           }
         },
         viewItem: {
@@ -106,7 +135,13 @@ export const mockFetchMetrics = async (url: string): Promise<StoreMetrics> => {
             item_name: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers",
             item_brand: "ALOHAS",
             item_category: "Sneakers",
-            price: "863.00"
+            price: "863.00",
+            currency: "RON",
+            item_variant_id: "46966090694992",
+            item_product_id: "8596796539216",
+            item_list_name: "",
+            product_category: "Sneakers",
+            gtm_tag: "GA4 - Item View"
           }
         }
       },
@@ -119,7 +154,13 @@ export const mockFetchMetrics = async (url: string): Promise<StoreMetrics> => {
             event_name: "page_view",
             page_title: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers | ALOHAS",
             page_location: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
-            visitor_type: "guest"
+            visitor_type: "guest",
+            language: "en-gb",
+            screen_resolution: "1512x982",
+            client_id: "70765470.1734709897",
+            engagement_time_msec: "4797",
+            session_id: "1734709896",
+            session_number: "1"
           }
         },
         {
@@ -131,7 +172,24 @@ export const mockFetchMetrics = async (url: string): Promise<StoreMetrics> => {
             item_name: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers",
             item_brand: "ALOHAS",
             item_category: "Sneakers",
-            price: "863.00"
+            price: "863.00",
+            currency: "RON",
+            item_variant_id: "46966090694992",
+            item_product_id: "8596796539216",
+            item_list_name: "",
+            product_category: "Sneakers",
+            gtm_tag: "GA4 - Item View"
+          }
+        },
+        {
+          time: 1.123,
+          measurementId: "G-D62M79ZZEG",
+          url: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
+          parameters: {
+            event_name: "user_engagement",
+            engagement_time_msec: "1123",
+            page_location: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
+            visitor_type: "guest"
           }
         }
       ]
