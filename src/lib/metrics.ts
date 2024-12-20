@@ -27,15 +27,33 @@ export interface StoreMetrics {
 
 export const isValidShopifyUrl = (url: string): boolean => {
   try {
-    const parsedUrl = new URL(url);
+    // Remove any leading/trailing whitespace
+    let cleanUrl = url.trim();
+    
+    // Add https:// if no protocol is specified
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://' + cleanUrl;
+    }
+    
+    // Remove www. if present
+    cleanUrl = cleanUrl.replace('www.', '');
+    
+    const parsedUrl = new URL(cleanUrl);
     return (
-      parsedUrl.protocol === "https:" &&
       !parsedUrl.pathname.includes("/products/") &&
       !parsedUrl.hostname.includes("myshopify.com")
     );
   } catch {
     return false;
   }
+};
+
+export const normalizeUrl = (url: string): string => {
+  let cleanUrl = url.trim();
+  if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+    cleanUrl = 'https://' + cleanUrl;
+  }
+  return cleanUrl.replace('www.', '');
 };
 
 export const formatTime = (seconds: number): string => {

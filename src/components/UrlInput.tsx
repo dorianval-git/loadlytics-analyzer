@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { isValidShopifyUrl } from "@/lib/metrics";
+import { isValidShopifyUrl, normalizeUrl } from "@/lib/metrics";
 
 interface UrlInputProps {
   onAnalyze: (url: string) => void;
@@ -23,15 +23,15 @@ export const UrlInput = ({ onAnalyze, isLoading }: UrlInputProps) => {
       return;
     }
     setError("");
-    onAnalyze(url);
+    onAnalyze(normalizeUrl(url));
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
       <div className="flex gap-2">
         <Input
-          type="url"
-          placeholder="Enter Shopify store URL (e.g., https://store.com)"
+          type="text"
+          placeholder="Enter Shopify store URL (e.g., store.com)"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           className="font-mono"
