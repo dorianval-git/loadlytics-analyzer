@@ -117,17 +117,18 @@ export const fetchMetrics = async (url: string, onStageChange: (stage: number) =
   
   try {
     onStageChange(0);
-    const response = await fetch(`${API_BASE_URL}/analyze`, {
+    const response = await fetch(`/api/index`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url })
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-      throw new Error(data.details || `Analysis failed: ${response.status}`);
+      const error = await response.json();
+      throw new Error(error.details || `Analysis failed: ${response.status}`);
     }
+
+    const data = await response.json();
 
     if (data.homepage) onStageChange(1);
     if (data.homepage?.performance) onStageChange(2);

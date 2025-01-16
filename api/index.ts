@@ -1,41 +1,24 @@
-import express from 'express';
-import cors from 'cors';
 import { analyzeStore } from './metrics.service';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Create Express app
-const app = express();
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
 
-// Configure CORS for production and development
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://*.vercel.app', // Allow Vercel preview deployments
-    process.env.NEXT_PUBLIC_FRONTEND_URL, // Your production frontend URL
-  ].filter(Boolean),
-  methods: ['GET', 'POST'],
-  credentials: true
-}));
+  // Handle OPTIONS request for CORS
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-app.use(express.json());
-
-// Logging middleware
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Body:`, req.body);
-  next();
-});
-
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('[Error] Global error handler:', err);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    details: err.message
-  });
-});
-
-// Main analyze endpoint
-export default async function handler(req: express.Request, res: express.Response) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -64,10 +47,4 @@ export default async function handler(req: express.Request, res: express.Respons
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
-}
-
-const PORT = process.env.PORT || 3001;
-
-app.listen(PORT, () => {
-  console.log(`[Server] Running on port ${PORT}`);
-}); 
+} 
