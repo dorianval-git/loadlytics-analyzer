@@ -119,16 +119,24 @@ export const fetchMetrics = async (url: string, onStageChange: (stage: number) =
     onStageChange(0);
     const response = await fetch(`/api/index`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
       body: JSON.stringify({ url })
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.details || `Analysis failed: ${response.status}`);
+      const errorData = await response.json().catch(() => ({ 
+        error: `HTTP error! status: ${response.status}`
+      }));
+      throw new Error(errorData.details || errorData.error || `Analysis failed: ${response.status}`);
     }
 
     const data = await response.json();
+    if (!data) {
+      throw new Error('No data received from analysis');
+    }
 
     if (data.homepage) onStageChange(1);
     if (data.homepage?.performance) onStageChange(2);

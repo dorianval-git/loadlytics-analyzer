@@ -25,6 +25,7 @@ export default async function handler(
 
   try {
     const { url } = req.body;
+    
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
     }
@@ -37,11 +38,16 @@ export default async function handler(
 
     console.log('[API] Starting analysis for:', url);
     const metrics = await analyzeStore(url);
+    
+    if (!metrics) {
+      throw new Error('Analysis returned no data');
+    }
+    
     console.log('[API] Analysis complete:', metrics);
-    res.json(metrics);
+    return res.status(200).json(metrics);
   } catch (error: any) {
     console.error('[API] Analysis failed:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Failed to analyze site',
       details: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
