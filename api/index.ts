@@ -1,10 +1,8 @@
 import { analyzeStore } from './metrics.service';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+// Export the handler function
+module.exports = async (req: VercelRequest, res: VercelResponse) => {
   // Log the incoming request
   console.log('[API] Received request:', {
     method: req.method,
@@ -15,7 +13,7 @@ export default async function handler(
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
@@ -31,7 +29,11 @@ export default async function handler(
   // Ensure request method is POST
   if (req.method !== 'POST') {
     console.log('[API] Invalid method:', req.method);
-    res.status(405).json({ error: 'Method not allowed', allowedMethods: ['POST'] });
+    res.status(405).json({ 
+      error: 'Method not allowed', 
+      message: 'Only POST requests are allowed',
+      allowedMethods: ['POST'] 
+    });
     return;
   }
 
@@ -78,4 +80,4 @@ export default async function handler(
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
-} 
+}; 
