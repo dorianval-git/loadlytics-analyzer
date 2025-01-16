@@ -113,11 +113,12 @@ export const formatTime = (seconds: number): string => {
 };
 
 export const fetchMetrics = async (url: string, onStageChange: (stage: number) => void) => {
-  console.log('Fetching metrics for:', url);
+  console.log('[Metrics] Starting analysis for URL:', url);
+  console.log('[Metrics] Using API endpoint:', `${API_BASE_URL}/index`);
   
   try {
     onStageChange(0);
-    const response = await fetch(`/api/index`, {
+    const response = await fetch(`${API_BASE_URL}/index`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -126,14 +127,31 @@ export const fetchMetrics = async (url: string, onStageChange: (stage: number) =
       body: JSON.stringify({ url })
     });
 
+    console.log('[Metrics] Response status:', response.status);
+    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ 
-        error: `HTTP error! status: ${response.status}`
-      }));
-      throw new Error(errorData.details || errorData.error || `Analysis failed: ${response.status}`);
+      const contentType = response.headers.get('content-type');
+      let errorMessage = '';
+      
+      try {
+        if (contentType?.includes('application/json')) {
+          const errorData = await response.json();
+          errorMessage = errorData.details || errorData.error || `HTTP error! status: ${response.status}`;
+        } else {
+          errorMessage = await response.text();
+        }
+      } catch (parseError) {
+        console.error('[Metrics] Error parsing response:', parseError);
+        errorMessage = `Failed to parse error response (${response.status})`;
+      }
+
+      console.error('[Metrics] API error:', errorMessage);
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
+    console.log('[Metrics] Analysis data received:', data);
+
     if (!data) {
       throw new Error('No data received from analysis');
     }
@@ -145,7 +163,7 @@ export const fetchMetrics = async (url: string, onStageChange: (stage: number) =
     
     return data;
   } catch (error: any) {
-    console.error('Failed to fetch metrics:', error);
+    console.error('[Metrics] Failed to fetch metrics:', error);
     throw new Error(error.message || 'Failed to analyze the store');
   }
 };
