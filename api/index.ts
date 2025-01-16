@@ -5,11 +5,11 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
+  // Log the incoming request
   console.log('[API] Received request:', {
     method: req.method,
     url: req.url,
     headers: req.headers,
-    body: req.body
   });
 
   // Enable CORS
@@ -21,33 +21,43 @@ export default async function handler(
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
 
-  console.log('[API] CORS headers set');
-
-  // Handle OPTIONS request for CORS
+  // Handle preflight request
   if (req.method === 'OPTIONS') {
     console.log('[API] Handling OPTIONS request');
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
+  // Ensure request method is POST
   if (req.method !== 'POST') {
     console.log('[API] Invalid method:', req.method);
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.status(405).json({ error: 'Method not allowed', allowedMethods: ['POST'] });
+    return;
   }
 
   try {
+    // Validate request body
+    if (!req.body || typeof req.body !== 'object') {
+      console.log('[API] Invalid request body:', req.body);
+      res.status(400).json({ error: 'Invalid request body' });
+      return;
+    }
+
     const { url } = req.body;
     console.log('[API] Received URL:', url);
     
     if (!url) {
       console.log('[API] Missing URL in request');
-      return res.status(400).json({ error: 'URL is required' });
+      res.status(400).json({ error: 'URL is required' });
+      return;
     }
 
     try {
       new URL(url);
     } catch (error) {
       console.log('[API] Invalid URL format:', error);
-      return res.status(400).json({ error: 'Invalid URL format' });
+      res.status(400).json({ error: 'Invalid URL format' });
+      return;
     }
 
     console.log('[API] Starting analysis for:', url);
@@ -58,11 +68,11 @@ export default async function handler(
       throw new Error('Analysis returned no data');
     }
     
-    console.log('[API] Analysis complete:', metrics);
-    return res.status(200).json(metrics);
+    console.log('[API] Analysis complete');
+    res.status(200).json(metrics);
   } catch (error: any) {
     console.error('[API] Analysis failed:', error);
-    return res.status(500).json({ 
+    res.status(500).json({ 
       error: 'Failed to analyze site',
       details: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined

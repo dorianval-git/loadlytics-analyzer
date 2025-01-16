@@ -118,16 +118,22 @@ export const fetchMetrics = async (url: string, onStageChange: (stage: number) =
   
   try {
     onStageChange(0);
-    const response = await fetch(`${API_BASE_URL}/index`, {
+    
+    // Add request debugging
+    const requestOptions = {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
       body: JSON.stringify({ url })
-    });
-
+    };
+    
+    console.log('[Metrics] Request options:', requestOptions);
+    
+    const response = await fetch(`${API_BASE_URL}/index`, requestOptions);
     console.log('[Metrics] Response status:', response.status);
+    console.log('[Metrics] Response headers:', Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       const contentType = response.headers.get('content-type');
@@ -136,16 +142,17 @@ export const fetchMetrics = async (url: string, onStageChange: (stage: number) =
       try {
         if (contentType?.includes('application/json')) {
           const errorData = await response.json();
+          console.log('[Metrics] Error response data:', errorData);
           errorMessage = errorData.details || errorData.error || `HTTP error! status: ${response.status}`;
         } else {
           errorMessage = await response.text();
+          console.log('[Metrics] Error response text:', errorMessage);
         }
       } catch (parseError) {
         console.error('[Metrics] Error parsing response:', parseError);
         errorMessage = `Failed to parse error response (${response.status})`;
       }
 
-      console.error('[Metrics] API error:', errorMessage);
       throw new Error(errorMessage);
     }
 
@@ -164,6 +171,6 @@ export const fetchMetrics = async (url: string, onStageChange: (stage: number) =
     return data;
   } catch (error: any) {
     console.error('[Metrics] Failed to fetch metrics:', error);
-    throw new Error(error.message || 'Failed to analyze the store');
+    throw error;
   }
 };
