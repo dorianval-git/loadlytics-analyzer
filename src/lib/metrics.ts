@@ -1,8 +1,11 @@
+import { API_BASE_URL } from './config';
+
 export interface GA4Event {
   time: number;
   measurementId: string;
   url: string;
   parameters: Record<string, string>;
+  timeFromPageLoad: number;
 }
 
 export interface GA4Events {
@@ -10,7 +13,53 @@ export interface GA4Events {
   viewItem?: GA4Event;
 }
 
+export interface ConsentModeConfig {
+  isConfigured: boolean;
+  settings?: {
+    ad_storage?: { implicit?: boolean; update?: boolean; default?: boolean };
+    analytics_storage?: { implicit?: boolean; update?: boolean; default?: boolean };
+    ad_user_data?: { implicit?: boolean; update?: boolean; default?: boolean };
+    ad_personalization?: { implicit?: boolean; update?: boolean; default?: boolean };
+    functionality_storage?: { implicit?: boolean; update?: boolean; default?: boolean };
+    personalization_storage?: { implicit?: boolean; update?: boolean; default?: boolean };
+    security_storage?: { implicit?: boolean; update?: boolean; default?: boolean };
+    region?: { implicit?: boolean; update?: boolean; default?: boolean };
+  };
+}
+
+export interface ElevarEventConfig {
+  cart_reconcile: boolean;
+  cart_view: boolean;
+  checkout_complete: boolean;
+  collection_view: boolean;
+  product_add_to_cart: boolean;
+  product_add_to_cart_ajax: boolean;
+  product_remove_from_cart: boolean;
+  product_select: boolean;
+  product_view: boolean;
+  search_results_view: boolean;
+  user: boolean;
+  save_order_notes: boolean;
+}
+
+export interface ElevarConfig {
+  isConfigured: boolean;
+  shopUrl?: string;
+  gtmContainer?: string;
+  consentEnabled?: boolean;
+  eventConfig?: ElevarEventConfig;
+}
+
+export interface GTMConfig {
+  isConfigured: boolean;
+  containerId?: string;
+  loadTime?: number;
+  scriptUrl?: string;
+  status?: number;
+}
+
 export interface PageMetrics {
+  url: string;
   ttfb: number;
   fcp: number;
   domLoad: number;
@@ -18,6 +67,9 @@ export interface PageMetrics {
   resources: number;
   ga4Events: GA4Events;
   allGA4Events: GA4Event[];
+  consentMode: ConsentModeConfig;
+  elevar: ElevarConfig;
+  gtm: GTMConfig;
 }
 
 export interface StoreMetrics {
@@ -60,157 +112,31 @@ export const formatTime = (seconds: number): string => {
   return `${seconds.toFixed(2)}s`;
 };
 
-export const mockFetchMetrics = async (url: string): Promise<StoreMetrics> => {
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+export const fetchMetrics = async (url: string, onStageChange: (stage: number) => void) => {
+  console.log('Fetching metrics for:', url);
+  
+  try {
+    onStageChange(0);
+    const response = await fetch(`${API_BASE_URL}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
 
-  return {
-    homepage: {
-      ttfb: 0.342,
-      fcp: 0.891,
-      domLoad: 1.234,
-      windowLoad: 2.456,
-      resources: 45,
-      ga4Events: {
-        pageView: {
-          time: 0.567,
-          measurementId: "G-D62M79ZZEG",
-          url: "https://alohas.com/",
-          parameters: {
-            event_name: "page_view",
-            page_title: "ALOHAS | On-demand Fashion",
-            page_location: "https://alohas.com/",
-            visitor_type: "guest",
-            language: "en-gb",
-            screen_resolution: "1512x982",
-            client_id: "70765470.1734709897",
-            engagement_time_msec: "4569",
-            session_id: "1734709896",
-            session_number: "1"
-          }
-        }
-      },
-      allGA4Events: [
-        {
-          time: 0.567,
-          measurementId: "G-D62M79ZZEG",
-          url: "https://alohas.com/",
-          parameters: {
-            event_name: "page_view",
-            page_title: "ALOHAS | On-demand Fashion",
-            page_location: "https://alohas.com/",
-            visitor_type: "guest",
-            language: "en-gb",
-            screen_resolution: "1512x982",
-            client_id: "70765470.1734709897",
-            engagement_time_msec: "4569",
-            session_id: "1734709896",
-            session_number: "1"
-          }
-        },
-        {
-          time: 1.234,
-          measurementId: "G-D62M79ZZEG",
-          url: "https://alohas.com/",
-          parameters: {
-            event_name: "user_engagement",
-            engagement_time_msec: "1234",
-            page_location: "https://alohas.com/",
-            visitor_type: "guest"
-          }
-        }
-      ]
-    },
-    productPage: {
-      ttfb: 0.298,
-      fcp: 0.765,
-      domLoad: 1.123,
-      windowLoad: 2.234,
-      resources: 38,
-      ga4Events: {
-        pageView: {
-          time: 0.456,
-          measurementId: "G-D62M79ZZEG",
-          url: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
-          parameters: {
-            event_name: "page_view",
-            page_title: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers | ALOHAS",
-            page_location: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
-            visitor_type: "guest",
-            language: "en-gb",
-            screen_resolution: "1512x982",
-            client_id: "70765470.1734709897",
-            engagement_time_msec: "4797",
-            session_id: "1734709896",
-            session_number: "1"
-          }
-        },
-        viewItem: {
-          time: 0.789,
-          measurementId: "G-D62M79ZZEG",
-          url: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
-          parameters: {
-            event_name: "view_item",
-            item_name: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers",
-            item_brand: "ALOHAS",
-            item_category: "Sneakers",
-            price: "863.00",
-            currency: "RON",
-            item_variant_id: "46966090694992",
-            item_product_id: "8596796539216",
-            item_list_name: "",
-            product_category: "Sneakers",
-            gtm_tag: "GA4 - Item View"
-          }
-        }
-      },
-      allGA4Events: [
-        {
-          time: 0.456,
-          measurementId: "G-D62M79ZZEG",
-          url: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
-          parameters: {
-            event_name: "page_view",
-            page_title: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers | ALOHAS",
-            page_location: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
-            visitor_type: "guest",
-            language: "en-gb",
-            screen_resolution: "1512x982",
-            client_id: "70765470.1734709897",
-            engagement_time_msec: "4797",
-            session_id: "1734709896",
-            session_number: "1"
-          }
-        },
-        {
-          time: 0.789,
-          measurementId: "G-D62M79ZZEG",
-          url: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
-          parameters: {
-            event_name: "view_item",
-            item_name: "Tb.490 Rife Shimmer Silver Cream Leather Sneakers",
-            item_brand: "ALOHAS",
-            item_category: "Sneakers",
-            price: "863.00",
-            currency: "RON",
-            item_variant_id: "46966090694992",
-            item_product_id: "8596796539216",
-            item_list_name: "",
-            product_category: "Sneakers",
-            gtm_tag: "GA4 - Item View"
-          }
-        },
-        {
-          time: 1.123,
-          measurementId: "G-D62M79ZZEG",
-          url: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
-          parameters: {
-            event_name: "user_engagement",
-            engagement_time_msec: "1123",
-            page_location: "https://alohas.com/products/tb-490-rife-shimmer-silver-cream-leather-sneakers",
-            visitor_type: "guest"
-          }
-        }
-      ]
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.details || `Analysis failed: ${response.status}`);
     }
-  };
+
+    if (data.homepage) onStageChange(1);
+    if (data.homepage?.performance) onStageChange(2);
+    if (data.productPage) onStageChange(3);
+    onStageChange(4);
+    
+    return data;
+  } catch (error: any) {
+    console.error('Failed to fetch metrics:', error);
+    throw new Error(error.message || 'Failed to analyze the store');
+  }
 };
