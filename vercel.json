@@ -1,16 +1,21 @@
 {
   "version": 2,
+  "functions": {
+    "api/*.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
   "builds": [
     {
-      "src": "api/index.ts",
+      "src": "api/*.ts",
       "use": "@vercel/node"
     },
     {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist",
-        "buildCommand": "npm run build"
+        "distDir": "dist"
       }
     }
   ],
@@ -18,7 +23,13 @@
     {
       "src": "/api/(.*)",
       "methods": ["OPTIONS", "POST"],
-      "dest": "api/index.ts"
+      "headers": {
+        "Access-Control-Allow-Origin": "https://loadlytics-analyzer.vercel.app",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+        "Access-Control-Allow-Credentials": "true"
+      },
+      "dest": "api/$1.ts"
     },
     {
       "handle": "filesystem"
@@ -27,8 +38,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 } 

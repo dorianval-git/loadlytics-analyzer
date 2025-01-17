@@ -8,56 +8,6 @@ export interface GA4Event {
   timeFromPageLoad: number;
 }
 
-export interface GA4Events {
-  pageView?: GA4Event;
-  viewItem?: GA4Event;
-}
-
-export interface ConsentModeConfig {
-  isConfigured: boolean;
-  settings?: {
-    ad_storage?: { implicit?: boolean; update?: boolean; default?: boolean };
-    analytics_storage?: { implicit?: boolean; update?: boolean; default?: boolean };
-    ad_user_data?: { implicit?: boolean; update?: boolean; default?: boolean };
-    ad_personalization?: { implicit?: boolean; update?: boolean; default?: boolean };
-    functionality_storage?: { implicit?: boolean; update?: boolean; default?: boolean };
-    personalization_storage?: { implicit?: boolean; update?: boolean; default?: boolean };
-    security_storage?: { implicit?: boolean; update?: boolean; default?: boolean };
-    region?: { implicit?: boolean; update?: boolean; default?: boolean };
-  };
-}
-
-export interface ElevarEventConfig {
-  cart_reconcile: boolean;
-  cart_view: boolean;
-  checkout_complete: boolean;
-  collection_view: boolean;
-  product_add_to_cart: boolean;
-  product_add_to_cart_ajax: boolean;
-  product_remove_from_cart: boolean;
-  product_select: boolean;
-  product_view: boolean;
-  search_results_view: boolean;
-  user: boolean;
-  save_order_notes: boolean;
-}
-
-export interface ElevarConfig {
-  isConfigured: boolean;
-  shopUrl?: string;
-  gtmContainer?: string;
-  consentEnabled?: boolean;
-  eventConfig?: ElevarEventConfig;
-}
-
-export interface GTMConfig {
-  isConfigured: boolean;
-  containerId?: string;
-  loadTime?: number;
-  scriptUrl?: string;
-  status?: number;
-}
-
 export interface PageMetrics {
   url: string;
   ttfb: number;
@@ -65,15 +15,26 @@ export interface PageMetrics {
   domLoad: number;
   windowLoad: number;
   resources: number;
-  ga4Events: GA4Events;
+  ga4Events: {
+    pageView?: GA4Event;
+    viewItem?: GA4Event;
+  };
   allGA4Events: GA4Event[];
-  consentMode: ConsentModeConfig;
-  elevar: ElevarConfig;
-  gtm: GTMConfig;
+  consentMode: {
+    isConfigured: boolean;
+    settings?: Record<string, any>;
+  };
+  elevar: {
+    isConfigured: boolean;
+    shopUrl?: string;
+    gtmContainer?: string;
+    consentEnabled?: boolean;
+    eventConfig?: Record<string, boolean>;
+  };
 }
 
 export interface StoreMetrics {
-  homepage: PageMetrics | null;
+  homepage: PageMetrics;
   productPage: PageMetrics | null;
 }
 

@@ -1,10 +1,11 @@
-import puppeteer from 'puppeteer';
-import type { StoreMetrics, PageMetrics, GA4Event } from '../lib/metrics';
+import * as puppeteer from 'puppeteer';
+import type { StoreMetrics, PageMetrics, GA4Event } from '../src/lib/metrics';
+import type { Browser } from 'puppeteer';
 
 export async function analyzeStore(url: string): Promise<StoreMetrics> {
   console.log(`[Analysis] Starting full analysis for URL: ${url}`);
   
-  let browser;
+  let browser: Browser | undefined;
   try {
     browser = await puppeteer.launch({
       headless: 'new',
@@ -13,11 +14,14 @@ export async function analyzeStore(url: string): Promise<StoreMetrics> {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
+        '--single-process',
+        '--no-zygote',
         '--window-size=1920,1080',
         '--disable-web-security',
         '--disable-features=IsolateOrigins,site-per-process'
       ],
-      timeout: 60000
+      timeout: 30000,
+      ignoreHTTPSErrors: true
     }).catch(error => {
       console.error('[Browser] Failed to launch browser:', error);
       throw new Error(`Browser launch failed: ${error.message}`);
@@ -76,27 +80,41 @@ export async function analyzeStore(url: string): Promise<StoreMetrics> {
       }
     });
 
+    // Add early cleanup
+    process.on('SIGINT', () => {
+      if (browser) {
+        console.log('[Browser] Cleaning up browser instance');
+        browser.close().catch(console.error);
+      }
+    });
+
     // Analyze homepage with timeout
     console.log('[Analysis] Starting homepage analysis...');
+    const HOMEPAGE_TIMEOUT = 25000;
     const homepage = await Promise.race([
       analyzeUrl(page, url, ga4Events),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Homepage analysis timeout')), 60000))
+      new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Homepage analysis timeout')), HOMEPAGE_TIMEOUT)
+      )
     ]);
     console.log('[Analysis] Homepage analysis complete:', homepage);
     
     // Find and analyze product page
     console.log('[Analysis] Looking for product page...');
-    let productPage = null;
+    let productPage: PageMetrics | null = null;
     try {
-      const productLink = await page.$eval('a[href*="/products/"]', (el) => el.href);
+      const productLink = await page.$eval('a[href*="/products/"]', (el: Element) => (el as HTMLAnchorElement).href);
       console.log(`[Products] Found product link: ${productLink}`);
+      const PRODUCT_PAGE_TIMEOUT = 20000;
       productPage = await Promise.race([
         analyzeUrl(page, productLink, ga4Events),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Product page analysis timeout')), 30000))
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Product page analysis timeout')), PRODUCT_PAGE_TIMEOUT)
+        )
       ]);
       console.log('[Products] Product page analysis complete:', productPage);
     } catch (error) {
-      console.log('[Products] No product page found or analysis failed:', error.message);
+      console.log('[Products] No product page found or analysis failed:', error instanceof Error ? error.message : String(error));
     }
 
     return { homepage, productPage };
@@ -110,15 +128,16 @@ export async function analyzeStore(url: string): Promise<StoreMetrics> {
   }
 }
 
-async function analyzeUrl(page: any, url: string, ga4Events: GA4Event[]): Promise<PageMetrics> {
+async function analyzeUrl(page: puppeteer.Page, url: string, ga4Events: GA4Event[]): Promise<PageMetrics> {
   console.log(`[Page Analysis] Starting analysis for URL: ${url}`);
   
   try {
     // Navigate to page and wait for load
     console.log('[Navigation] Loading page...');
+    const PAGE_NAVIGATION_TIMEOUT = 15000;
     const response = await page.goto(url, { 
-      waitUntil: ['networkidle0', 'domcontentloaded', 'load'],
-      timeout: 45000
+      waitUntil: ['networkidle0', 'domcontentloaded'],
+      timeout: PAGE_NAVIGATION_TIMEOUT
     });
     
     if (!response) {
@@ -145,7 +164,7 @@ async function analyzeUrl(page: any, url: string, ga4Events: GA4Event[]): Promis
           }
 
           const entries = googleTagData.ics.entries;
-          const settings = {};
+          const settings: Record<string, unknown> = {};
           
           if (entries instanceof Map) {
             entries.forEach((value, key) => {
@@ -158,7 +177,7 @@ async function analyzeUrl(page: any, url: string, ga4Events: GA4Event[]): Promis
           console.log('Consent settings:', JSON.stringify(settings, null, 2));
 
           const hasConfiguration = Object.values(settings).some(setting => {
-            if (typeof setting !== 'object') return false;
+            if (!setting || typeof setting !== 'object') return false;
             return Object.keys(setting).some(key => 
               key === 'update' || key === 'default'
             );
@@ -242,7 +261,7 @@ async function analyzeUrl(page: any, url: string, ga4Events: GA4Event[]): Promis
   }
 }
 
-async function checkForElevarConfig(page: any, maxAttempts = 5): Promise<any> {
+async function checkForElevarConfig(page: puppeteer.Page, maxAttempts = 5): Promise<any> {
   console.log('[Elevar] Starting search for configuration...');
   
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -267,62 +286,25 @@ async function checkForElevarConfig(page: any, maxAttempts = 5): Promise<any> {
           console.log(`[Elevar] Attempting to fetch config from: ${url}`);
           try {
             const response = await fetch(url);
-            if (!response.ok) {
-              console.log(`[Elevar] Failed to fetch ${url}: ${response.status}`);
-              continue;
-            }
-
             const configText = await response.text();
-            console.log('[Elevar] Successfully fetched configuration file');
-            console.log('[Elevar] Config file size:', configText.length, 'bytes');
-
+            
             if (configText.includes('export default') || configText.includes('"signing_key"')) {
-              console.log('[Elevar] Valid configuration format detected');
-              
               try {
-                // Extract the JSON part from the config
                 let jsonStr = configText;
                 if (configText.includes('export default')) {
-                  console.log('[Elevar] Converting export default format to JSON');
                   jsonStr = configText.replace('export default', '').trim();
-                  
-                  // Remove any trailing semicolon
                   if (jsonStr.endsWith(';')) {
                     jsonStr = jsonStr.slice(0, -1);
                   }
                 }
-
-                // Log the exact string we're trying to parse
-                console.log('[Elevar] Attempting to parse:', jsonStr.substring(0, 100) + '...');
-
-                const config = JSON.parse(jsonStr);
-                console.log('[Elevar] Successfully parsed configuration');
                 
-                // Validate it's a real Elevar config
-                if (config.signing_key && config.market_groups) {
-                  console.log('\n[Elevar] Configuration Details:');
-                  console.log('----------------------------------------');
-                  console.log('Shop URL:', config.shop_url);
-                  console.log('GTM Container:', config.market_groups?.[0]?.gtm_container);
-                  console.log('Consent Enabled:', config.consent_enabled);
-                  console.log('\nEvent Configuration:');
-                  Object.entries(config.event_config || {}).forEach(([event, enabled]) => {
-                    console.log(`  ${event.padEnd(25)}: ${enabled ? '✅' : '❌'}`);
-                  });
-                  console.log('----------------------------------------\n');
-                  
-                  return config;
-                } else {
-                  console.log('[Elevar] Invalid configuration format - missing required fields');
-                }
+                const config = JSON.parse(jsonStr);
+                return config;
               } catch (e) {
                 console.error('[Elevar] Failed to parse JSON:', e);
-                // Log the problematic part of the string
                 const errorPosition = (e as any).position || 1202;
                 console.log('[Elevar] Problem area:', jsonStr.substring(errorPosition - 20, errorPosition + 20));
               }
-            } else {
-              console.log('[Elevar] Invalid file format - not a configuration file');
             }
           } catch (e) {
             console.error(`[Elevar] Error fetching ${url}:`, e);
