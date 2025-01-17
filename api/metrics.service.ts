@@ -1,5 +1,5 @@
 import * as puppeteer from 'puppeteer';
-import type { StoreMetrics, PageMetrics, GA4Event } from '../src/lib/metrics';
+import type { StoreMetrics, PageMetrics, GA4Event } from '../src/lib/metrics.ts';
 import type { Browser } from 'puppeteer';
 
 export async function analyzeStore(url: string): Promise<StoreMetrics> {
@@ -8,7 +8,7 @@ export async function analyzeStore(url: string): Promise<StoreMetrics> {
   let browser: Browser | undefined;
   try {
     browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -28,7 +28,7 @@ export async function analyzeStore(url: string): Promise<StoreMetrics> {
     });
     
     console.log('[Browser] Browser launched successfully');
-    const context = await browser.createIncognitoBrowserContext();
+    const context = await browser.createBrowserContext();
     const page = await context.newPage();
     
     // Set viewport
@@ -45,7 +45,7 @@ export async function analyzeStore(url: string): Promise<StoreMetrics> {
     
     await page.setRequestInterception(true);
     
-    page.on('request', async request => {
+    page.on('request', async (request: puppeteer.HTTPRequest) => {
       try {
         const url = request.url();
         if (url.includes('google-analytics.com/g/collect') || 
@@ -70,7 +70,7 @@ export async function analyzeStore(url: string): Promise<StoreMetrics> {
     });
 
     // Add page console logging
-    page.on('console', msg => {
+    page.on('console', (msg: puppeteer.ConsoleMessage) => {
       const type = msg.type();
       const text = msg.text();
       if (type === 'error') {
@@ -103,7 +103,9 @@ export async function analyzeStore(url: string): Promise<StoreMetrics> {
     console.log('[Analysis] Looking for product page...');
     let productPage: PageMetrics | null = null;
     try {
-      const productLink = await page.$eval('a[href*="/products/"]', (el: Element) => (el as HTMLAnchorElement).href);
+      const productLink = await page.$eval('a[href*="/products/"]', 
+        (el: HTMLAnchorElement) => el.href
+      );
       console.log(`[Products] Found product link: ${productLink}`);
       const PRODUCT_PAGE_TIMEOUT = 20000;
       productPage = await Promise.race([
